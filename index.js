@@ -7,11 +7,21 @@ var parts      = dockerhost.split(':')
   , host       = parts.slice(0, -1).join(':').replace(/^tcp/, 'http')
   , port       = parts[parts.length - 1]
 
+// github redirects for tarball downloads, so we need request here
+var request = require('request')
+  , injectDockerfile = require('./lib/inject-dockerfile')
+
 var docker = new require('dockerode')({ host: host, port: port });
 var dir = console.dir.bind(console);
 
-var go = module.exports = function () {
-  
+var go = module.exports = 
+function () {
+
+  var url = 'https://github.com/thlorenz/browserify-markdown-editor/archive/011-finished-product.tar.gz';
+  var stream = request(url);
+
+  injectDockerfile(stream)
+    .pipe(require('fs').createWriteStream(__dirname + '/result/product.tar.gz', 'utf8'));
 };
 
 
@@ -31,5 +41,10 @@ var refs = {
      '010-finished-dev-version',
      '011-finished-product' ],
   pulls: [ '1/head' ] 
+}
+
+// Test
+if (!module.parent && typeof window === 'undefined') {
+  go();
 }
 
