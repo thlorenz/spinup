@@ -14,14 +14,16 @@ var request = require('request')
 var docker = new require('dockerode')({ host: host, port: port });
 var dir = console.dir.bind(console);
 
+var gunzip = require('zlib').createGunzip();
+
 var go = module.exports = 
 function () {
 
   var url = 'https://github.com/thlorenz/browserify-markdown-editor/archive/011-finished-product.tar.gz';
-  var stream = request(url);
+  var stream = request(url).pipe(gunzip);
 
-  injectDockerfile(stream)
-    .pipe(require('fs').createWriteStream(__dirname + '/result/product.tar.gz', 'utf8'));
+  injectDockerfile(stream, { removeRootDir: true })
+    .pipe(require('fs').createWriteStream(__dirname + '/result/product.tar', 'utf8'));
 };
 
 
