@@ -14,7 +14,8 @@
   "dependencies": {
     "hyperquest": "~0.2.0",
     "through2": "~0.4.1",
-    "dockerode": "^1.2.8"
+    "dockerode": "^1.2.8",
+    "tar-stream": "^0.2.5"
   },
   "devDependencies": {
     "tap": "~0.4.3"

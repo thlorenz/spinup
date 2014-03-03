@@ -8,6 +8,7 @@ var parts      = dockerhost.split(':')
   , port       = parts[parts.length - 1]
 
 var docker = new require('dockerode')({ host: host, port: port });
+var dir = console.dir.bind(console);
 
 var go = module.exports = function () {
   
