@@ -7,9 +7,13 @@ var parts      = dockerhost.split(':')
   , host       = parts.slice(0, -1).join(':').replace(/^tcp/, 'http')
   , port       = parts[parts.length - 1]
 
+
 // github redirects for tarball downloads, so we need request here
 var request = require('request')
   , injectDockerfile = require('./lib/inject-dockerfile')
+  , stringifyMsg = require('./lib/stringify-msg') 
+
+var log = require('npmlog');
 
 var docker = new require('dockerode')({ host: host, port: port });
 var dir = console.dir.bind(console);
@@ -20,21 +24,27 @@ function inspect(obj, depth) {
   console.error(require('util').inspect(obj, false, depth || 5, true));
 }
 
+function logMsg (chunk) {
+  log.info('dockerize', stringifyMsg(chunk));
+}
+
 var go = module.exports = 
 
-function () {
+function (cb) {
 
   var url = 'https://github.com/thlorenz/browserify-markdown-editor/archive/011-finished-product.tar.gz';
   var stream = request(url).pipe(gunzip);
 
   var file = injectDockerfile(stream, { removeRootDir: true });
-    //.pipe(require('fs').createWriteStream(__dirname + '/result/product.tar', 'utf8'));
 
   docker.buildImage(file, { t: 'markdown-test' } , function (err, res) {
     if (err) return console.error(err);
     inspect(res.headers);
-    inspect(res.body);
-    res.pipe(process.stdout);
+
+    res
+      .on('error', cb)
+      .on('data', logMsg)
+      .on('end', cb);
   });
 };
 
@@ -59,6 +69,9 @@ var refs = {
 
 // Test
 if (!module.parent && typeof window === 'undefined') {
-  go();
+  go(function (err) {
+    if (err) return console.error(err);
+    console.log('done');  
+  });
 }
 

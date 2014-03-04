@@ -1,6 +1,8 @@
-from dockerfile/nodejs
+from    dockerfile/nodejs
 
-sudo apt-get install nodejs-dev
-
-add . /src
+add     . /src
 workdir /src
+
+run     npm install
+
+cmd     [ "npm", "start" ]
