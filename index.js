@@ -9,43 +9,90 @@ var parts      = dockerhost.split(':')
 
 
 // github redirects for tarball downloads, so we need request here
-var request = require('request')
-  , injectDockerfile = require('./lib/inject-dockerfile')
-  , stringifyMsg = require('./lib/stringify-msg') 
+var path         = require('path')
+  , dockerify    = require('dockerify')
+  , tarStream     = require('./lib/tar-stream')
+  , stringifyMsg = require('./lib/stringify-msg')
 
 var log = require('npmlog');
 
 var docker = new require('dockerode')({ host: host, port: port });
 var dir = console.dir.bind(console);
 
-var gunzip = require('zlib').createGunzip();
+var defaultDockerfile = path.join(__dirname, 'lib', 'Dockerfile');
 
 function inspect(obj, depth) {
   console.error(require('util').inspect(obj, false, depth || 5, true));
 }
 
 function logMsg (chunk) {
-  log.info('dockerize', stringifyMsg(chunk));
+  log.info('spinup', stringifyMsg(chunk));
 }
 
-var go = module.exports = 
+function localTarStream() {
+  var fs = require('fs');
+  return fs.createReadStream(__dirname + '/tmp/in.tar.gz', 'utf8').pipe(require('zlib').createGunzip());
+}
 
-function (cb) {
+function imageName(repo, tag) {
+  return repo + ':' + tag;
+}
 
-  var url = 'https://github.com/thlorenz/browserify-markdown-editor/archive/011-finished-product.tar.gz';
-  var stream = request(url).pipe(gunzip);
+function buildImage(opts, cb) {
+  var stream = tarStream[opts.hub](opts.repo, opts.tag);
 
-  var file = injectDockerfile(stream, { removeRootDir: true });
+  var tarstream = dockerify(stream, { strip: opts.strip, dockerfile: opts.dockerfile });
+  tarstream
+    .on('error', log.error.bind(log, 'dockerize'))
+    .on('entry', function (x) { log.verbose('dockerize', 'processing ', x.name) })
+    .on('overriding-dockerfile', function (x) { log.info('dockerize', 'overriding existing dockerfile') })
+    .on('existing-dockerfile', function (x) { log.info('dockerize', 'using dockerfile found inside the tarball instead of the one provided, use opts.override:true to change that') })
 
-  docker.buildImage(file, { t: 'markdown-test' } , function (err, res) {
-    if (err) return console.error(err);
-    inspect(res.headers);
+  docker.buildImage(tarstream, { t: imageName(opts.repo, opts.tag) } , function (err, res) {
+    if (err) return cb(err);
 
     res
       .on('error', cb)
       .on('data', logMsg)
       .on('end', cb);
   });
+}
+
+function createContainer(opts, cb) {
+  docker.createContainer({
+        Image: imageName(opts.repo, opts.tag)
+      }
+    , cb
+  );
+}
+
+/*function runImage(opts, cmd, cb) {
+  if (!Array.isArray(cmd)) cmd = cmd.split(' ');
+  docker.run(imageName(opts.repo, opts.tag), cmd, process.stdout, function (err, data, container) {
+    if (err) return console.error(err);
+    
+    console.log(data.StatusCode);
+  });
+}*/
+
+var go = module.exports = 
+
+function (opts, cb) {
+  opts.hub        = opts.hub || 'github';
+  opts.dockerfile = opts.dockerfile || defaultDockerfile;
+
+  /*buildImage({
+      hub: 'github'
+    , repo : 'thlorenz/browserify-markdown-editor'
+    , tag : '011-finished-product'
+    , dockerfile: defaultDockerfile
+    }
+  , function (err) {
+    cb(err);
+  });*/
+
+ var port = 42222;
+ // runImage(opts, '-p ' + port + ':' + port + ' -i -rm npm start');
 };
 
 
@@ -69,9 +116,14 @@ var refs = {
 
 // Test
 if (!module.parent && typeof window === 'undefined') {
-  go(function (err) {
+  var opts = {
+      repo : 'thlorenz/browserify-markdown-editor'
+    , tag : '011-finished-product'
+    , port: 3000
+  }
+
+  go(opts, function (err) {
     if (err) return console.error(err);
     console.log('done');  
   });
 }
-
