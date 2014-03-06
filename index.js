@@ -58,13 +58,6 @@ function buildImage(opts, cb) {
   });
 }
 
-function createContainer(opts, cb) {
-  docker.createContainer({
-        Image: imageName(opts.repo, opts.tag)
-      }
-    , cb
-  );
-}
 
 /*function runImage(opts, cmd, cb) {
   if (!Array.isArray(cmd)) cmd = cmd.split(' ');
@@ -92,6 +85,7 @@ function (opts, cb) {
   });*/
 
  var port = 42222;
+ createContainer(opts, cb);
  // runImage(opts, '-p ' + port + ':' + port + ' -i -rm npm start');
 };
 
