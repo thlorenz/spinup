@@ -3,10 +3,13 @@
 // github redirects for tarball downloads, so we need request here
 var path         = require('path')
   , dockerify    = require('dockerify')
+  , runnel       = require('runnel')
+  , xtend        = require('xtend')
+  , util         = require('util')
   , tarStream    = require('./lib/tar-stream')
   , stringifyMsg = require('./lib/stringify-msg')
-  , images       = require('./lib/images')()
-  , containers   = require('./lib/containers')()
+  , Images       = require('./lib/images')
+  , Containers   = require('./lib/containers')
 
 var log = require('npmlog');
 
@@ -16,7 +19,7 @@ var dir = console.dir.bind(console);
 var defaultDockerfile = path.join(__dirname, 'lib', 'Dockerfile');
 
 function inspect(obj, depth) {
-  console.error(require('util').inspect(obj, false, depth || 5, true));
+  return util.inspect(obj, false, depth || 5, true);
 }
 
 function logMsg (chunk) {
@@ -28,26 +31,54 @@ function localTarStream() {
   return fs.createReadStream(__dirname + '/tmp/in.tar.gz', 'utf8').pipe(require('zlib').createGunzip());
 }
 
+function buildImage(images, opts, cb) {
+  opts = xtend({ hub: 'github', dockerfile: defaultDockerfile }, opts);
+  
+  if (!opts.repo) return cb(new Error('Need to provide repo to pull image from'));
+  if (!opts.tag)  return cb(new Error('Need to provide tag to pull image from'));
+
+  images.build(opts, cb);
+}
+
+function buildImages (images, opts, tags, cb) {
+  var tasks = tags
+    .map(function (x) {
+      return function (cb_) {
+        buildImage(images, xtend(opts, { tag: x }), cb_)
+      }
+    });
+
+  runnel(tasks.concat(cb));
+}
+
 var go = module.exports = 
 
 function (opts, cb) {
-  opts.hub        = opts.hub || 'github';
-  opts.dockerfile = opts.dockerfile || defaultDockerfile;
 
-  images.build({
-      hub: 'github'
-    , repo : 'thlorenz/browserify-markdown-editor'
-    , tag : '011-finished-product'
-    , dockerfile: defaultDockerfile
-    , tarStream : localTarStream()
-    }
-  , function (err, res) {
-      inspect({ err: err, res: res });    
-    }  
-  )
+  var port = 42222;
+  var images = new Images();
 
- var port = 42222;
- //containers.create(opts, cb);
+  images
+    .on('processing', function (info) {
+      log.silly('images', 'processing\n', inspect(info));
+    }) 
+    .on('building', function (info) {
+      log.verbose('images', 'building\n', inspect(info));
+    }) 
+    .on('built', function (info) {
+      log.silly('images', 'built\n', inspect(info));
+    }) 
+    .on('msg', function (info) {
+      log.info('images', 'msg', inspect(info));
+    })
+    .on('error', function (err) {
+      log.error('images', 'error', err);
+    })
+
+  buildImages(images, opts, refs.tags, function (err, res) {
+     if (err) return cb(err);
+     cb(null, res);
+  });
 };
 
 
@@ -73,10 +104,10 @@ var refs = {
 if (!module.parent && typeof window === 'undefined') {
   var opts = {
       repo : 'thlorenz/browserify-markdown-editor'
-    , tag : '011-finished-product'
     , port: 3000
   }
 
+  log.level = 'verbose';
   go(opts, function (err) {
     if (err) return console.error(err);
     console.log('done');  

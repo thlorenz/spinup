@@ -17,7 +17,8 @@
     "request": "^2.34.0",
     "npmlog": "0.0.6",
     "dockerify": "^0.1.0",
-    "xtend": "^2.1.2"
+    "xtend": "^2.1.2",
+    "runnel": "^0.5.1"
   },
   "devDependencies": {
     "tap": "~0.4.3"
