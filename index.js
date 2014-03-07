@@ -32,7 +32,11 @@ function localTarStream() {
 }
 
 function buildImage(images, opts, cb) {
-  opts = xtend({ hub: 'github', dockerfile: defaultDockerfile }, opts);
+  opts = xtend({ 
+      hub        : 'github'
+    , strip      : 1
+    , dockerfile : defaultDockerfile
+  }, opts);
   
   if (!opts.repo) return cb(new Error('Need to provide repo to pull image from'));
   if (!opts.tag)  return cb(new Error('Need to provide tag to pull image from'));
@@ -68,8 +72,8 @@ function (opts, cb) {
     .on('built', function (info) {
       log.silly('images', 'built\n', inspect(info));
     }) 
-    .on('msg', function (info) {
-      log.info('images', 'msg', inspect(info));
+    .on('msg', function (msg) {
+      log.info('images', 'msg', msg);
     })
     .on('error', function (err) {
       log.error('images', 'error', err);

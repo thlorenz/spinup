@@ -4,4 +4,12 @@ docker rm `docker ps -notrunc -a -q`
 docker rmi `docker images | grep browserify | awk '{print $3}'`
 docker rmi `docker images | grep none | awk '{print $3}'` 
 
+echo
+echo 'Images:'
+echo
 docker images
+
+echo
+echo 'Containers:'
+echo
+docker ps -a 
