@@ -1,22 +1,16 @@
 'use strict';
 
-
-var dockerhost = process.env.DOCKER_HOST || 'tcp://127.0.0.1:4243'
-var parts      = dockerhost.split(':')
-  // dockerode works via sending http requests, so a tcp host won't work :P
-  , host       = parts.slice(0, -1).join(':').replace(/^tcp/, 'http')
-  , port       = parts[parts.length - 1]
-
-
 // github redirects for tarball downloads, so we need request here
 var path         = require('path')
   , dockerify    = require('dockerify')
-  , tarStream     = require('./lib/tar-stream')
+  , tarStream    = require('./lib/tar-stream')
   , stringifyMsg = require('./lib/stringify-msg')
+  , images       = require('./lib/images')()
+  , containers   = require('./lib/containers')()
 
 var log = require('npmlog');
 
-var docker = new require('dockerode')({ host: host, port: port });
+var docker = require('./lib/docker');
 var dir = console.dir.bind(console);
 
 var defaultDockerfile = path.join(__dirname, 'lib', 'Dockerfile');
@@ -34,59 +28,26 @@ function localTarStream() {
   return fs.createReadStream(__dirname + '/tmp/in.tar.gz', 'utf8').pipe(require('zlib').createGunzip());
 }
 
-function imageName(repo, tag) {
-  return repo + ':' + tag;
-}
-
-function buildImage(opts, cb) {
-  var stream = tarStream[opts.hub](opts.repo, opts.tag);
-
-  var tarstream = dockerify(stream, { strip: opts.strip, dockerfile: opts.dockerfile });
-  tarstream
-    .on('error', log.error.bind(log, 'dockerize'))
-    .on('entry', function (x) { log.verbose('dockerize', 'processing ', x.name) })
-    .on('overriding-dockerfile', function (x) { log.info('dockerize', 'overriding existing dockerfile') })
-    .on('existing-dockerfile', function (x) { log.info('dockerize', 'using dockerfile found inside the tarball instead of the one provided, use opts.override:true to change that') })
-
-  docker.buildImage(tarstream, { t: imageName(opts.repo, opts.tag) } , function (err, res) {
-    if (err) return cb(err);
-
-    res
-      .on('error', cb)
-      .on('data', logMsg)
-      .on('end', cb);
-  });
-}
-
-
-/*function runImage(opts, cmd, cb) {
-  if (!Array.isArray(cmd)) cmd = cmd.split(' ');
-  docker.run(imageName(opts.repo, opts.tag), cmd, process.stdout, function (err, data, container) {
-    if (err) return console.error(err);
-    
-    console.log(data.StatusCode);
-  });
-}*/
-
 var go = module.exports = 
 
 function (opts, cb) {
   opts.hub        = opts.hub || 'github';
   opts.dockerfile = opts.dockerfile || defaultDockerfile;
 
-  /*buildImage({
+  images.build({
       hub: 'github'
     , repo : 'thlorenz/browserify-markdown-editor'
     , tag : '011-finished-product'
     , dockerfile: defaultDockerfile
+    , tarStream : localTarStream()
     }
-  , function (err) {
-    cb(err);
-  });*/
+  , function (err, res) {
+      inspect({ err: err, res: res });    
+    }  
+  )
 
  var port = 42222;
- createContainer(opts, cb);
- // runImage(opts, '-p ' + port + ':' + port + ' -i -rm npm start');
+ //containers.create(opts, cb);
 };
 
 
