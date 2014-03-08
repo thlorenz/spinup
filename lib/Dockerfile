@@ -1,6 +1,8 @@
 from    dockerfile/nodejs
 
-add     . /src
-workdir /src
+add . /src
 
-run npm install
+run cd /src; npm install
+
+expose 3000
+cmd ["node", "/src/index.js"]

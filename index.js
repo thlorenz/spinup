@@ -55,12 +55,8 @@ function buildImages (images, opts, tags, cb) {
   runnel(tasks.concat(cb));
 }
 
-var go = module.exports = 
-
-function (opts, cb) {
-
-  var port = 42222;
-  var images = new Images();
+function initImages(tags, opts, cb) {
+  var images = new Images()
 
   images
     .on('processing', function (info) {
@@ -70,37 +66,115 @@ function (opts, cb) {
       log.verbose('images', 'building\n', inspect(info));
     }) 
     .on('built', function (info) {
-      log.silly('images', 'built\n', inspect(info));
+      log.info('images', 'built\n', inspect(info));
     }) 
     .on('msg', function (msg) {
-      log.info('images', 'msg', msg);
+      log.silly('images', 'msg', msg);
     })
     .on('error', function (err) {
       log.error('images', 'error', err);
-    })
+    });
 
-  buildImages(images, opts, refs.tags, function (err, res) {
+  buildImages(images, opts, tags, function (err, res) {
      if (err) return cb(err);
      cb(null, res);
   });
-};
+}
+
+function getPortBindings(port) {
+  return { "3000/tcp": [
+          {
+            "HostIp": "0.0.0.0",
+            "HostPort": port 
+          }
+      ]
+  }
+}
+
+function createContainers(containers, tags, opts, cb) {
+  var portBindings =  getPortBindings(42222);
+ 
+  var tasks = tags
+    .map(function (x) {
+      return function (cb_) {
+        containers.create(xtend(opts, { tag: x }), cb_);
+      }
+    })
+
+  runnel(tasks.concat(cb));
+}
+
+function runContainers(containers, tags, opts, cb) {
+  var port = 49222;
+  var tasks = tags
+    .map(function (x) {
+      return function (cb_) {
+        opts.PortBindings = getPortBindings(port++);
+        opts.tag = x;
+        containers.run(opts, cb_);
+      }
+    })
+
+  runnel(tasks.concat(cb));
+}
+
+function initContainers(tags, opts, cb) {
+  var containers = new Containers();
+
+  [ 'creating'
+  , 'starting'
+  , 'stopping'
+  , 'killing' 
+  , 'removing' 
+  ].forEach(function (x) {
+      containers.on(x, function (info) {
+        log.verbose('containers', x + '\n', inspect(info));
+      })
+    });
+
+  [ 'created'
+  , 'started'
+  , 'stopped'
+  , 'killed' 
+  , 'removed' 
+  ].forEach(function (x) {
+      containers.on(x, function (info) {
+        log.info('containers', x + '\n', inspect(info));
+      })
+    });
+
+  containers.cleanAll(function (err) {
+    if (err) return cb(err);
+    runContainers(containers, tags, opts, cb);
+  });
+}
+
+var go = module.exports = function (opts, cb) {
+  /*initImages(refs.tags, opts, function (err) {
+    if (err) return cb(err);
+    console.log('inited images');
+  })*/
+    initContainers(refs.tags, opts, cb);
+}
 
 
 var refs = { 
   heads: [ 'gh-pages', 'master' ],
   tags:
-   [ '000-nstarted',
-     '001-start',
-     '002-main',
-     '003-static-server',
-     '004-rendering-markdown-on-server',
-     '005-styled',
-     '006-dynamic-bundle',
-     '007-rendering-md-client-side',
-     '008-updating-on-edit-in-realtime',
-     '009-improved-styling',
+   [ 
+     //'000-nstarted',
+     //'001-start',
+     //'002-main',
+     //'003-static-server',
+     //'004-rendering-markdown-on-server',
+     //'005-styled',
+     //'006-dynamic-bundle',
+     //'007-rendering-md-client-side',
+     //'008-updating-on-edit-in-realtime',
+     //'009-improved-styling',
      '010-finished-dev-version',
-     '011-finished-product' ],
+     //'011-finished-product' 
+  ],
   pulls: [ '1/head' ] 
 }
 
