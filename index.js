@@ -100,10 +100,10 @@ function runContainers(containers, tags, opts, cb) {
     , exposePort: 8080
   }, opts);
   var tasks = tags
-    .map(function (tag) {
+    .map(function (tag, idx) {
       return function (cb_) {
         var image = docker.imageName(opts.repo, tag)
-          , pb = portBindings(opts.exposePort, opts.hostPortStart++);
+          , pb = portBindings(opts.exposePort, opts.hostPortStart + idx);
 
         containers.run({ 
             create : xtend(opts.create, { Image : image })
@@ -140,18 +140,25 @@ function initContainers(tags, opts, cb) {
       })
     });
 
-  containers.cleanAll(function (err) {
+  /*containers.cleanAll(function (err) {
     if (err) return cb(err);
     runContainers(containers, tags, opts, cb);
-  });
+  });*/
+  runContainers(containers, tags, opts, cb);
 }
 
 var go = module.exports = function (opts, cb) {
-  /*initImages(refs.tags, opts, function (err) {
-    if (err) return cb(err);
-    console.log('inited images');
-  })*/
-  initContainers(refs.tags, opts, cb);
+  if (opts.images && opts.containers) {
+    initImages(refs.tags, opts, function (err) {
+      if (err) return cb(err);
+      console.log('inited images');
+      initContainers(refs.tags, opts, cb);
+    })
+  } else if (opts.images) {
+    initImages(refs.tags, opts, cb);
+  } else if (opts.containers) {
+    initContainers(refs.tags, opts, cb);
+  }
 }
 
 
@@ -167,9 +174,9 @@ var refs = {
      //'005-styled',
      //'006-dynamic-bundle',
      //'007-rendering-md-client-side',
-     //'008-updating-on-edit-in-realtime',
-     //'009-improved-styling',
-     '010-finished-dev-version',
+     '008-updating-on-edit-in-realtime',
+     '009-improved-styling',
+     //'010-finished-dev-version',
      //'011-finished-product' 
   ],
   pulls: [ '1/head' ] 
@@ -181,6 +188,8 @@ if (!module.parent && typeof window === 'undefined') {
       repo          : 'thlorenz/browserify-markdown-editor'
     , hostPortStart : 49222
     , exposePort    : 3000
+   // , images        : true
+    , containers    : true
   }
 
   log.level = 'verbose';
