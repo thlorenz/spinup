@@ -7,7 +7,9 @@ var path         = require('path')
   , xtend        = require('xtend')
   , util         = require('util')
   , tarStream    = require('./lib/tar-stream')
+  , docker       = require('./lib/docker')
   , stringifyMsg = require('./lib/stringify-msg')
+  , portBindings = require('./lib/port-bindings')
   , Images       = require('./lib/images')
   , Containers   = require('./lib/containers')
 
@@ -81,19 +83,7 @@ function initImages(tags, opts, cb) {
   });
 }
 
-function getPortBindings(port) {
-  return { "3000/tcp": [
-          {
-            "HostIp": "0.0.0.0",
-            "HostPort": port 
-          }
-      ]
-  }
-}
-
 function createContainers(containers, tags, opts, cb) {
-  var portBindings =  getPortBindings(42222);
- 
   var tasks = tags
     .map(function (x) {
       return function (cb_) {
@@ -107,11 +97,15 @@ function createContainers(containers, tags, opts, cb) {
 function runContainers(containers, tags, opts, cb) {
   var port = 49222;
   var tasks = tags
-    .map(function (x) {
+    .map(function (tag) {
       return function (cb_) {
-        opts.PortBindings = getPortBindings(port++);
-        opts.tag = x;
-        containers.run(opts, cb_);
+        var image = docker.imageName(opts.repo, tag)
+          , pb = portBindings(3000, port);
+
+        containers.run({ 
+            create : xtend(opts.create, { Image : image })
+          , start  : xtend(opts.start, { PortBindings: pb })
+        }, cb_);
       }
     })
 
@@ -154,7 +148,7 @@ var go = module.exports = function (opts, cb) {
     if (err) return cb(err);
     console.log('inited images');
   })*/
-    initContainers(refs.tags, opts, cb);
+  initContainers(refs.tags, opts, cb);
 }
 
 
