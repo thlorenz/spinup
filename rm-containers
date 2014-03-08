@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+DOCKER_HOST=tcp://127.0.0.1:4243
+
+# Really removes docker containers
+# killing the daemon and any lxc process that may hang around 
+
+echo 'removing ALL containers'
+sudo docker -H $DOCKER_HOST ps -a
+
+# todo: skip heavey machinery if all containers where actually removed
+#sudo docker -H $DOCKER_HOST rm `sudo docker -H $DOCKER_HOST ps -a -q`
+
+dockerpid=$(ps aux | grep docker | grep -v grep | awk '{print $2}')
+lxcpid=$(ps aux | grep lxc | grep -v grep | awk '{print $2}')
+
+
+# nice first
+if [[ -n "$dockerpid" ]]; then 
+  echo "nicely killing docker $dockerpid"
+  sudo kill $dockerpid
+fi
+
+if [[ -n "$lxcpid" ]]; then 
+  echo "nicely killing lxc $lxcpid"
+  sudo kill $lxcpid
+fi
+
+sleep 0.5
+
+dockerpid=$(ps aux | grep docker | grep -v grep | awk '{print $2}')
+lxcpid=$(ps aux | grep lxc | grep -v grep | awk '{print $2}')
+
+# more forceful after
+if [[ -n "$dockerpid" ]]; then 
+  echo "nicely killing docker $dockerpid"
+  sudo kill -s SIGKILL$dockerpid
+fi
+
+if [[ -n "$lxcpid" ]]; then 
+  echo "nicely killing lxc $lxcpid"
+  sudo kill -s SIGKILL $lxcpid
+fi
+
+sudo rm -rf /var/lib/docker/containers
+
+echo 'all containers have been removed, please restart your docker daemon (docker -d)'
