@@ -95,12 +95,15 @@ function createContainers(containers, tags, opts, cb) {
 }
 
 function runContainers(containers, tags, opts, cb) {
-  var port = 49222;
+  opts = xtend({
+      hostPortStart: 49222
+    , exposePort: 8080
+  }, opts);
   var tasks = tags
     .map(function (tag) {
       return function (cb_) {
         var image = docker.imageName(opts.repo, tag)
-          , pb = portBindings(3000, port);
+          , pb = portBindings(opts.exposePort, opts.hostPortStart++);
 
         containers.run({ 
             create : xtend(opts.create, { Image : image })
@@ -175,8 +178,9 @@ var refs = {
 // Test
 if (!module.parent && typeof window === 'undefined') {
   var opts = {
-      repo : 'thlorenz/browserify-markdown-editor'
-    , port: 3000
+      repo          : 'thlorenz/browserify-markdown-editor'
+    , hostPortStart : 49222
+    , exposePort    : 3000
   }
 
   log.level = 'verbose';
