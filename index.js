@@ -105,10 +105,16 @@ function runContainers(containers, tags, opts, cb) {
         var image = docker.imageName(opts.repo, tag)
           , pb = portBindings(opts.exposePort, opts.hostPortStart + idx);
 
-        containers.run({ 
-            create : xtend(opts.create, { Image : image })
+        containers.run(
+          { create : xtend(opts.create, { Image : image })
           , start  : xtend(opts.start, { PortBindings: pb })
-        }, cb_);
+          }
+        , function (err) { 
+            // todo catch error in containers.run and remove container
+            if (err) console.error(err);
+            cb_() 
+          }
+        );
       }
     })
 
@@ -140,11 +146,11 @@ function initContainers(tags, opts, cb) {
       })
     });
 
-  /*containers.cleanAll(function (err) {
+  containers.cleanAll(function (err) {
     if (err) return cb(err);
     runContainers(containers, tags, opts, cb);
-  });*/
-  runContainers(containers, tags, opts, cb);
+  });
+//  runContainers(containers, tags, opts, cb);
 }
 
 var go = module.exports = function (opts, cb) {
@@ -170,14 +176,14 @@ var refs = {
      //'001-start',
      //'002-main',
      //'003-static-server',
-     //'004-rendering-markdown-on-server',
-     //'005-styled',
-     //'006-dynamic-bundle',
-     //'007-rendering-md-client-side',
-     '008-updating-on-edit-in-realtime',
+     '004-rendering-markdown-on-server',
+     '005-styled',
+     '006-dynamic-bundle',
+     '007-rendering-md-client-side',
+     //'008-updating-on-edit-in-realtime',
      '009-improved-styling',
      //'010-finished-dev-version',
-     //'011-finished-product' 
+     '011-finished-product' 
   ],
   pulls: [ '1/head' ] 
 }
@@ -188,7 +194,7 @@ if (!module.parent && typeof window === 'undefined') {
       repo          : 'thlorenz/browserify-markdown-editor'
     , hostPortStart : 49222
     , exposePort    : 3000
-   // , images        : true
+    , images        : true
     , containers    : true
   }
 
