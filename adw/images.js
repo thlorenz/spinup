@@ -4,14 +4,13 @@ var util         = require('util')
   , EE           = require('events').EventEmitter
   , dockerify    = require('dockerify')
   , stringifyMsg = require('./stringify-msg')
-  , tarStream    = require('./tar-stream')
 
 module.exports = Images; 
 
 function Images(docker) {
   if (!(this instanceof Images)) return new Images(docker);
 
-  this.docker = docker || require('./docker');
+  this.docker = docker;
 }
 util.inherits(Images, EE);
  
@@ -22,7 +21,7 @@ proto.buildStream = function (tarstream, opts, cb) {
 
   self.docker.buildImage(
       tarstream
-    , { t: self.docker.imageName(opts.repo, opts.tag) }
+    , { t: opts.Image }
     , function (err, res) {
         if (err) return cb(err);
         res
@@ -35,8 +34,10 @@ proto.buildStream = function (tarstream, opts, cb) {
 
 proto.build = function (opts, cb) {
   var self = this;
-  var stream = opts.tarStream || tarStream[opts.hub](opts.repo, opts.tag);
+  var stream = opts.tarStream;
   var tarstream = dockerify(stream, { strip: opts.strip, dockerfile: opts.dockerfile });
+
+  delete opts.tarStream;
 
   self.emit('building', opts);
   tarstream
@@ -74,6 +75,7 @@ proto.forEach = function forEach(fn, cb) {
     })
   })
 }
+return
 
 // TEST 
 function done(err) {

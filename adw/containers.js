@@ -12,7 +12,7 @@ util.inherits(Containers, EE);
 function Containers(docker) {
   if (!(this instanceof Containers)) return new Containers(docker);
 
-  this.docker = docker || require('./docker');
+  this.docker = docker;
   this.timeToStop = 500; 
   this.timeToCreate = 500;
 
@@ -84,7 +84,6 @@ proto.start = function (id, opts, cb) {
   self.docker
     .getContainer(id)
     .start(opts,  function (err) {
-      // todo: try starting again in a bit until max tries is reached
       if (err) return cb(err);
       self.emit('started', { id: id, opts: opts });
       cb();
@@ -108,7 +107,13 @@ proto.run = function(opts, cb) {
     (function start(retries) {
       container.start(opts.start, function (err) {
         if (err) { 
-          self.emit('warn', 'failed to start container %s, retrying', opts.Image);
+          self.emit(
+              'warn'
+            , 'failed to start container ' 
+              + inspect(opts.start) 
+              + ' as ' + container.id 
+              + ', retrying'
+          );
           return retries > opts.maxRetries 
             ? cb(new Error('Exceeded max retries trying to start container'))
             : start(retries + 1)
