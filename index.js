@@ -178,7 +178,7 @@ var refs = {
      //'003-static-server',
      '004-rendering-markdown-on-server',
      '005-styled',
-     '006-dynamic-bundle',
+     //'006-dynamic-bundle',
      '007-rendering-md-client-side',
      //'008-updating-on-edit-in-realtime',
      '009-improved-styling',
@@ -194,7 +194,7 @@ if (!module.parent && typeof window === 'undefined') {
       repo          : 'thlorenz/browserify-markdown-editor'
     , hostPortStart : 49222
     , exposePort    : 3000
-    , images        : true
+//    , images        : true
     , containers    : true
   }
 
