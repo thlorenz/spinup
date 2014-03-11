@@ -119,7 +119,7 @@ proto.run = function(opts, cb) {
             : start(retries + 1)
         }
 
-        cb();    
+        cb(null, container);    
       });
     })(0)
   });

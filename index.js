@@ -21,7 +21,6 @@ function localTarStream() {
   return fs.createReadStream(__dirname + '/tmp/in.tar.gz', 'utf8').pipe(require('zlib').createGunzip());
 }
 
-
 var go = module.exports = function (opts, cb) {
   if (opts.images && opts.containers) {
     initImages(refs.tags, opts, function (err) {
@@ -38,6 +37,7 @@ var go = module.exports = function (opts, cb) {
 
 var refs = { 
   heads: [ 'gh-pages', 'master' ],
+  //tags: [ '004-rendering-markdown-on-server' ],
   tags:
    [ 
      //'000-nstarted',
@@ -67,8 +67,8 @@ if (!module.parent && typeof window === 'undefined') {
   }
 
   log.level = 'verbose';
-  go(opts, function (err) {
+  go(opts, function (err, created) {
     if (err) return console.error(err);
-    console.log('done');  
+    console.log(inspect(created));
   });
 }
