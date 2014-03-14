@@ -3,6 +3,7 @@
 var util         = require('util')
   , EE           = require('events').EventEmitter
   , xtend        = require('xtend')
+  , runnel       = require('runnel')
   , portBindings = require('./port-bindings')
 
 module.exports = Containers;
@@ -38,6 +39,68 @@ proto.list = function (all, cb) {
 
 proto.listAll = function (cb) { 
   this.list(true, cb);
+}
+
+proto.listStopped = function (cb) {
+  this.listAll(function (err, res) {
+    if (err) return cb(err);
+    var dead = res.filter(function(x) { 
+      return (/^Exit/).test(x.Status) 
+    })
+    cb(null, dead);
+  });
+}
+
+proto.listRunning = function (cb) {
+  this.listAll(function (err, res) {
+    if (err) return cb(err);
+    var alive = res.filter(function(x) { 
+      return !(/^Exit/).test(x.Status) 
+    })
+    cb(null, alive);
+  });
+}
+
+proto.activePorts = function (cb) {
+  this.listAlive(function (err, res) {
+    if (err) return cb(err);
+    var byPort = res.reduce(function (acc, cont) {
+      var ports = cont.Ports;
+      if (ports && ports.length) {
+        ports.forEach(function (p) { acc[p.PublicPort] = cont })
+      }
+      return acc;
+    }, {});
+    cb(null, byPort);
+  });
+}
+
+proto.removeStopped = function (cb) {
+  var self = this;
+
+  function remove(id, cb_) {
+    var container = self.docker.getContainer(id);
+    self.emit('removing', id);
+    container.remove(function (err, data) {
+      if (err) return cb(err);
+      self.emit('removed', id);
+      cb_();
+    })
+  }
+
+  this.listStopped(function (err, res) {
+    if (err) return cb(err);
+    var tasks = res
+      .map(function (x) { 
+        return function (cb_) {
+          remove(x.Id, cb_);
+        }
+      })
+    runnel(tasks.concat(function (err) {
+      if (err) return cb(err);
+      cb(res);   
+    }))
+  })
 }
 
 proto.forEach = function forEach(fn, cb) {

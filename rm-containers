@@ -42,6 +42,10 @@ if [[ -n "$lxcpid" ]]; then
   sudo kill -s SIGKILL $lxcpid
 fi
 
+echo 'trying to remove container dirs'
 sudo rm -rf /var/lib/docker/containers
+
+echo "umounting all container dirs that couldn't be removed"
+mount | grep /docker/containers | awk '{print $3}' | xargs sudo umount
 
 echo 'all containers have been removed, please restart your docker daemon (docker -d)'

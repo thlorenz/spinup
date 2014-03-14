@@ -66,7 +66,7 @@ if (!module.parent && typeof window === 'undefined') {
     , containers    : true
   }
 
-  log.level = 'verbose';
+  log.level = 'silly';
   go(opts, function (err, created) {
     if (err) return console.error(err);
     console.log(inspect(created));
