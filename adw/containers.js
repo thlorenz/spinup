@@ -162,30 +162,32 @@ proto.startAll = function (getOpts, cb) {
 
 proto.run = function(opts, cb) {
   var self = this;
-  opts = xtend({ maxRetries: 5 }, opts);
-  self.create(opts.create, function (err, container) {
-    if (err) return cb(err);
+  opts = xtend({ retries: 5 }, opts);
+  (function createNstart(retries) {
+    self.create(opts.create, function (err, container) {
+      if (err) return cb(err);
 
-    
-    (function start(retries) {
-      container.start(opts.start, function (err) {
+      container.start(opts.start, function (err, started) {
         if (err) { 
           self.emit(
               'warn'
             , 'failed to start container ' 
               + inspect(opts.start) 
               + ' as ' + container.id 
+              + '\nError: ' + err
               + ', retrying'
           );
-          return retries > opts.maxRetries 
+          return retries > opts.retries  
             ? cb(new Error('Exceeded max retries trying to start container'))
-            : start(retries + 1)
+            // cleaning fails currently consistently (for my setup -- arch linux aufs friendly)
+            // we leave it in here in the hopes that it works elsewhere and/or in the future
+            : self.clean(container.id, createNstart.bind(null, retries + 1))
         }
 
         cb(null, container);    
       });
-    })(0)
-  });
+    });
+  })(0);
 }
 
 proto.clean = function cleanContainer(id, cb) {

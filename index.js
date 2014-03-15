@@ -16,11 +16,6 @@ function inspect(obj, depth) {
   return util.inspect(obj, false, depth || 5, true);
 }
 
-function localTarStream() {
-  var fs = require('fs');
-  return fs.createReadStream(__dirname + '/tmp/in.tar.gz', 'utf8').pipe(require('zlib').createGunzip());
-}
-
 var go = module.exports = function (opts, cb) {
   if (opts.images && opts.containers) {
     initImages(refs.tags, opts, function (err) {
@@ -44,12 +39,12 @@ var refs = {
      //'001-start',
      //'002-main',
      //'003-static-server',
-     '004-rendering-markdown-on-server',
-     '005-styled',
-     //'006-dynamic-bundle',
-     '007-rendering-md-client-side',
+       '004-rendering-markdown-on-server',
+      '005-styled',
+       //'006-dynamic-bundle',
+      '007-rendering-md-client-side',
      //'008-updating-on-edit-in-realtime',
-     '009-improved-styling',
+      '009-improved-styling',
      //'010-finished-dev-version',
      '011-finished-product' 
   ],
