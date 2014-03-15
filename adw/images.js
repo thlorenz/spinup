@@ -75,21 +75,3 @@ proto.forEach = function forEach(fn, cb) {
     })
   })
 }
-return
-
-// TEST 
-function done(err) {
-  if (err) return console.error(err);
-  console.log('success');
-}
-
-function inspect(obj, depth) {
-  console.error(require('util').inspect(obj, false, depth || 5, true));
-}
-
-// Test
-if (!module.parent && typeof window === 'undefined') {
-  var img = new Images();
-  img.forEach(inspect, done);
-}
-
