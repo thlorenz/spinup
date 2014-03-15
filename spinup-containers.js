@@ -6,6 +6,7 @@ var path         = require('path')
   , docker       = require('./lib/docker')
   , initImages   = require('./lib/init-images')
   , initContainers = require('./lib/init-containers')
+  , Containers = require('./adw/containers')
 
 var log = require('npmlog');
 
@@ -16,7 +17,7 @@ function inspect(obj, depth) {
   return util.inspect(obj, false, depth || 5, true);
 }
 
-var go = module.exports = function (opts, cb) {
+function init(opts, cb) {
   if (opts.images && opts.containers) {
     initImages(refs.tags, opts, function (err) {
       if (err) return cb(err);
@@ -29,6 +30,16 @@ var go = module.exports = function (opts, cb) {
   }
 }
 
+
+function reattach(opts, cb) {
+  var containers = new Containers(docker);
+  console.log('reattaching to running containers');
+  containers.activePorts(cb);
+}
+
+var go = module.exports = function (opts, cb) {
+  return opts.reattach ? reattach(opts, cb) : init(opts, cb);
+}
 
 var refs = { 
   heads: [ 'gh-pages', 'master' ],
@@ -58,12 +69,13 @@ if (!module.parent && typeof window === 'undefined') {
     , hostPortStart : 49222
     , exposePort    : 3000
 //    , images        : true
-    , containers    : true
+//    , containers    : true
+    , reattach: true
   }
 
   log.level = 'silly';
-  go(opts, function (err, created) {
+  go(opts, function (err, active) {
     if (err) return console.error(err);
-    console.log(inspect(created));
+    console.log(inspect(active));
   });
 }
