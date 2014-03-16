@@ -12,6 +12,6 @@ var go = module.exports = function (byPort, opts) {
       return acc 
         + '<iframe src="' 
         +   imageNameToPath(val.Image)
-        + '">\n';
+        + '/">\n';
     }, '')    
 }
