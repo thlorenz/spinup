@@ -20,9 +20,9 @@ var opts = {
   , host          : myLocalIp
   , hostPortStart : 49222
   , exposePort    : 3000
-//    , images        : true
-//  , containers    : true // TODO: also need to return by port object
-  , reattach: true
+  , images        : true
+  , containers    : true
+  , reattach      : false
 }
 
 function inspect(obj, depth) {
@@ -54,7 +54,6 @@ function matchMapped(mapped, url) {
 
 function createServer(byPort, cb) {
   var dockerContainers = renderIframes(byPort, opts);
-  console.log(dockerContainers);
   var indexHtml = indexTemplate.replace(/\{\{docker-containers\}\}/, dockerContainers);
 
   var server = http.createServer(function (req, res) {

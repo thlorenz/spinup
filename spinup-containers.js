@@ -17,28 +17,31 @@ function inspect(obj, depth) {
   return util.inspect(obj, false, depth || 5, true);
 }
 
+function getActivePorts(cb) {
+  var containers = new Containers(docker);
+  containers.activePorts(cb);
+}
+
 function init(opts, cb) {
   if (opts.images && opts.containers) {
     initImages(refs.tags, opts, function (err) {
       if (err) return cb(err);
-      initContainers(refs.tags, opts, cb);
+      initContainers(refs.tags, opts, done);
     })
   } else if (opts.images) {
-    initImages(refs.tags, opts, cb);
+    initImages(refs.tags, opts, done);
   } else if (opts.containers) {
-    initContainers(refs.tags, opts, cb);
+    initContainers(refs.tags, opts, done);
+  }
+
+  function done(err) {
+    if (err) return cb(err);
+    getActivePorts(cb);
   }
 }
 
-
-function reattach(opts, cb) {
-  var containers = new Containers(docker);
-  console.log('reattaching to running containers');
-  containers.activePorts(cb);
-}
-
 var go = module.exports = function (opts, cb) {
-  return opts.reattach ? reattach(opts, cb) : init(opts, cb);
+  return opts.reattach ? getActivePorts(cb) : init(opts, cb);
 }
 
 var refs = { 
