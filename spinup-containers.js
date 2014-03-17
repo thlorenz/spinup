@@ -69,8 +69,8 @@ if (!module.parent && typeof window === 'undefined') {
     , hostPortStart : 49222
     , exposePort    : 3000
 //    , images        : true
-//    , containers    : true
-    , reattach: true
+    , containers    : true
+    , reattach: false
   }
 
   log.level = 'silly';

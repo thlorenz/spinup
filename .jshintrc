@@ -1,0 +1,13 @@
+{
+    "laxcomma"  :  true
+  , "laxbreak"  :  true
+  , "sub"       :  true
+  , "onecase"   :  true
+  , "node"      :  true
+  , "expr"      :  true
+  , "strict"    :  false
+  , "validthis" :  true
+  , "browser"   :  true
+  , "boss"      :  true
+  , "asi"       :  true
+}

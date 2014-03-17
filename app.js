@@ -1,21 +1,27 @@
 'use strict';
 
-var http             = require('http')
+var fs               = require('fs')
+  , path             = require('path')
+  , http             = require('http')
   , hyperquest       = require('hyperquest')
   , log              = require('npmlog')
   , runnel           = require('runnel')
   , spinupContainers = require('./spinup-containers')
   , renderIframes    = require('./server/render-iframes')
-  , forwardTagRoutes = require('./server/forward-tag-routes')
+  , getMyLocalIp     = require('my-local-ip')
 
 log.level = 'silly';
 
+var myLocalIp = getMyLocalIp();
+var indexTemplate = fs.readFileSync(path.join(__dirname, 'server', 'index.html'), 'utf8');
+
 var opts = {
     repo          : 'thlorenz/browserify-markdown-editor'
+  , host          : myLocalIp
   , hostPortStart : 49222
   , exposePort    : 3000
 //    , images        : true
-//    , containers    : true
+//  , containers    : true // TODO: also need to return by port object
   , reattach: true
 }
 
@@ -30,6 +36,11 @@ function serveHtml(html, res) {
   res.end(html);
 }
 
+function serveCss (res) {
+  res.writeHead(200, { 'Content-Type': 'text/css' });
+  fs.createReadStream(path.join(__dirname, 'server', 'index.css')).pipe(res); 
+}
+
 function matchMapped(mapped, url) {
   return Object.keys(mapped)
     .filter(function(k) {
@@ -42,27 +53,17 @@ function matchMapped(mapped, url) {
 }
 
 function createServer(byPort, cb) {
-  var iframes = renderIframes(byPort, opts);
-  var routeMap = forwardTagRoutes(byPort, opts);
-  var indexHtml = [
-      '<html>'
-    , ' <body>'
-    , iframes
-    , ' </body>'
-    , '</html>'
-  ].join('\n') 
+  var dockerContainers = renderIframes(byPort, opts);
+  console.log(dockerContainers);
+  var indexHtml = indexTemplate.replace(/\{\{docker-containers\}\}/, dockerContainers);
 
   var server = http.createServer(function (req, res) {
     var root = 'http://0.0.0.0';
     log.http('spinup', '%s %s', req.method, req.url);
+
     if (req.url === '/') return serveHtml(indexHtml, res);
-    var mapped = matchMapped(routeMap, req.url);
-    if (mapped) {
-      var reroute = root + ':' + mapped;
-      log.verbose('spinup', 'rerouting to ' + reroute);
-      return hyperquest(reroute).pipe(res);
-    }
-    
+    if (req.url === '/index.css') return serveCss(res);
+
     res.writeHead(404);
     res.end();
   })
@@ -79,7 +80,7 @@ runnel(
 
       server.on('listening', function () {
         var a = server.address();
-        log.info('spinup', 'listening: http://%s:%d', a.address, a.port); 
+        log.info('spinup', 'listening: http://%s:%d', myLocalIp, a.port); 
       });
       server.listen(3000);
   }
