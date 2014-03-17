@@ -10,7 +10,7 @@ var fs               = require('fs')
   , renderIframes    = require('./server/render-iframes')
   , getMyLocalIp     = require('my-local-ip')
 
-log.level = 'silly';
+log.level = 'verbose';
 
 var myLocalIp = getMyLocalIp();
 var indexTemplate = fs.readFileSync(path.join(__dirname, 'server', 'index.html'), 'utf8');
@@ -20,7 +20,7 @@ var opts = {
   , host          : myLocalIp
   , hostPortStart : 49222
   , exposePort    : 3000
-  , images        : true
+//  , images        : true // todo: option to create non-existing images only
   , containers    : true
   , reattach      : false
 }

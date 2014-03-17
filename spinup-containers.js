@@ -46,21 +46,20 @@ var go = module.exports = function (opts, cb) {
 
 var refs = { 
   heads: [ 'gh-pages', 'master' ],
-  //tags: [ '004-rendering-markdown-on-server' ],
   tags:
    [ 
-     //'000-nstarted',
-     //'001-start',
-     //'002-main',
-     //'003-static-server',
-       '004-rendering-markdown-on-server',
-      '005-styled',
-       //'006-dynamic-bundle',
-      '007-rendering-md-client-side',
-     //'008-updating-on-edit-in-realtime',
-      '009-improved-styling',
-     //'010-finished-dev-version',
-     '011-finished-product' 
+    '000-nstarted',
+    // '001-start',         // oddly this image gets built but then is not found when trying to create container
+    '002-main',
+    '003-static-server',
+    '004-rendering-markdown-on-server',
+    '005-styled',
+    '006-dynamic-bundle',
+    '007-rendering-md-client-side',
+    '008-updating-on-edit-in-realtime',
+    '009-improved-styling',
+    '010-finished-dev-version',
+    '011-finished-product' 
   ],
   pulls: [ '1/head' ] 
 }
