@@ -18,9 +18,7 @@ var indexTemplate = fs.readFileSync(path.join(__dirname, 'server', 'index.html')
 var opts = {
     repo          : 'thlorenz/browserify-markdown-editor'
   , host          : myLocalIp
-  , hostPortStart : 49222
   , exposePort    : 3000
-//  , images        : true // todo: option to create non-existing images only
   , containers    : true
   , reattach      : false
 }

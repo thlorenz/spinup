@@ -12,16 +12,11 @@
   },
   "homepage": "https://github.com/thlorenz/spinup",
   "dependencies": {
-    "through2": "^0.4.1",
-    "dockerode": "^1.2.8",
-    "request": "^2.34.0",
     "npmlog": "0.0.6",
-    "dockerify": "^0.1.0",
-    "xtend": "^2.1.2",
-    "runnel": "^0.5.1",
-    "handlebars": "^2.0.0-alpha.2",
-    "hyperquest": "^0.2.0",
-    "my-local-ip": "~1.0.0"
+    "handlebars": "~2.0.0-alpha.2",
+    "spinup-tarstreams": "~0.1.0",
+    "dockerify": "^0.2.2",
+    "dockerify-github-repo": "^0.2.2"
   },
   "devDependencies": {
     "tap": "~0.4.3"
